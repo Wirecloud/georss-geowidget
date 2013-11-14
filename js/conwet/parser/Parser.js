@@ -50,26 +50,29 @@ conwet.parser.Parser = Class.create({
             "internalProjection": new OpenLayers.Projection('EPSG:4326')
         });
         var features = format.read(doc);
-
-        var dates = doc.getElementsByTagNameNS("*","date");
-        if (dates.length == 0) {
+        
+        var dates = doc.getElementsByTagNameNS("*","updated"); //For ATOM
+        if (dates.length == 0)
+            dates = doc.getElementsByTagNameNS("*","date");
+        if (dates.length == 0) 
             dates = doc.getElementsByTagNameNS("*","pubDate");
-        }
+        
 
         for (var i=0; i<features.length; i++) {
             var feature = features[i];
-
-            if (!feature.geometry) {
-                continue;
+            
+            var newFeature = {
+                title:       (feature.attributes.title)? feature.attributes.title: "Sin titulo",
+                description: (feature.attributes.description)? feature.attributes.description: "Sin descripción.",
+                link:        (feature.attributes.link)? feature.attributes.link: "",
+                date:        this.formatDate((i+1 < dates.length) ? dates[i+1].textContent : "")
             }
-
-            chan.features.push({
-                "title":       (feature.attributes.title)? feature.attributes.title: "Sin titulo",
-                "description": (feature.attributes.description)? feature.attributes.description: "Sin descripción.",
-                "link":        (feature.attributes.link)? feature.attributes.link: "",
-                "location":    this.formatLocation(feature.geometry.getBounds().getCenterLonLat()),
-                "date":        this.formatDate(dates[i].textContent)
-            });
+            
+            if (feature.geometry != null)
+                newFeature.location = this.formatLocation(feature.geometry.getBounds().getCenterLonLat());
+            
+            chan.features.push(newFeature);
+            
         }
 
         return chan;
